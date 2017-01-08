@@ -1,0 +1,103 @@
+#!/bin/sh
+
+ak_id=$(uci -q get aliddns.base.app_key)
+ak_sec=$(uci -q get aliddns.base.app_secret)
+rrid=$(uci -q get aliddns.base.record_id)
+main_dm=$(uci -q get aliddns.base.main_domain)
+sub_dm=$(uci -q get aliddns.base.sub_domain)
+iface=$(uci -q get aliddns.base.interface)
+
+DATE=$(date +'%Y-%m-%d %H:%M:%S')
+timestamp=$(date -u "+%Y-%m-%dT%H%%3A%M%%3A%SZ")
+
+# ip=`curl -sSL http://whatismyip.akamai.com/`
+ip=$(ifconfig $iface 2>/dev/null | sed -n 's/.*inet addr:\([0-9.]*\) .*/\1/p')
+log_file=/var/log/aliddns.log
+
+check_aliddns() {
+	current_ip=`nslookup $sub_dm.$main_dm dns9.hichina.com 2>/dev/null | sed -n 's/Address 1: \([0-9.]*\)/\1/p' | sed -n '2p'`
+	if [ "Z$current_ip" == "Z" ]; then
+		current_ip=`nslookup $sub_dm.$main_dm dns10.hichina.com 2>/dev/null | sed -n 's/Address 1: \([0-9.]*\)/\1/p' | sed -n '2p'`
+	fi
+	if [ "Z$current_ip" == "Z" ]; then
+		rrid='' # NO Resolve IP Means new Record_ID
+	fi
+	echo "$DATE WAN-IP: ${ip}"
+	echo "$DATE DOMAIN-IP: ${current_ip}"
+	if [ "Z$ip" == "Z$current_ip" ]; then
+		echo "$DATE IP dont need UPDATE..."
+		return 0
+	else
+		echo "$DATE UPDATING..."
+		return 1
+	fi
+}
+
+urlencode() {
+	# urlencode <string>
+	out=''
+	for i in $(seq ${#1}); do
+		c="${1:$(($i - 1)):1}"
+		case $c in
+		[a-zA-Z0-9._-]) out="$out$c" ;;
+		*) out="$out`printf '%%%02X' "'$c"`" ;;
+		esac
+		i=$(($i + 1))
+	done
+	echo -n $out
+}
+
+
+send_request() {
+	local args="AccessKeyId=$ak_id&Action=$1&Format=json&$2&Version=2015-01-09"
+	local hash=$(urlencode $(echo -n "GET&%2F&$(urlencode $args)" | openssl dgst -sha1 -hmac "$ak_sec&" -binary | openssl base64))
+	curl -sSL "http://alidns.aliyuncs.com/?$args&Signature=$hash"
+}
+
+get_recordid() {
+	sed -n 's/.*RecordId[^0-9]*\([0-9]*\).*/\1/p'
+}
+
+query_recordid() {
+	send_request "DescribeSubDomainRecords" "SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&SubDomain=$sub_dm.$main_dm&Timestamp=$timestamp"
+}
+
+update_record() {
+	send_request "UpdateDomainRecord" "RR=$sub_dm&RecordId=$1&SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&Timestamp=$timestamp&Type=A&Value=$ip"
+}
+
+add_record() {
+	send_request "AddDomainRecord&DomainName=$main_dm" "RR=$sub_dm&SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&Timestamp=$timestamp&Type=A&Value=$ip"
+}
+
+do_ddns_record() {
+	if [ "Z$rrid" == "Z" ]; then
+		rrid=`query_recordid | get_recordid`
+	fi
+	if [ "Z$rrid" == "Z" ]; then
+		rrid=`add_record | get_recordid`
+		echo "$DATE ADD record $rrid"
+	else
+		update_record $rrid >/dev/null 2>&1
+		echo "$DATE UPDATE record $rrid"
+	fi
+	if [ "Z$rrid" == "Z" ]; then
+		# failed
+		echo "$DATE # ERROR, Please Check Config/Time！"
+	else
+		# save rrid
+		uci set aliddns.base.record_id=$rrid
+		uci commit aliddns
+		echo "$DATE # UPDATED($ip)"
+	fi
+}
+
+clean_log() {
+	if [ $(cat $log_file 2>/dev/null | wc -l) -ge 16 ]; then
+		rm -f $log_file && touch $log_file
+		echo "$DATE Log Cleaned！"
+	fi
+}
+
+clean_log
+check_aliddns || do_ddns_record

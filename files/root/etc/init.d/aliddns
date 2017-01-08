@@ -1,0 +1,27 @@
+#!/bin/sh /etc/rc.common
+
+START=80
+
+restart() {
+	start
+}
+
+start() {
+	[ "Z$(uci -q get aliddns.base.enable)" != "Z1" ] && ( echo "AliDDNS NOT ENABLED！" > /var/log/aliddns.log ) && exit 0
+	sed -i '/AliDDNS NOT ENABLED/d' /var/log/aliddns.log
+
+	time=`uci -q get aliddns.base.time 2>/dev/null`
+	[ "Z$time" == "Z" ] && time=10
+	[ 0 -lt $time -a $time -lt 60 ] || time=10
+
+	sed -i '/aliddns/d' /etc/crontabs/root
+	echo "*/$time * * * * /usr/sbin/aliddns >> /var/log/aliddns.log 2>&1" >> /etc/crontabs/root
+	/etc/init.d/cron restart
+	/usr/sbin/aliddns
+}
+
+stop() {
+	sed -i '/aliddns/d' /etc/crontabs/root
+	/etc/init.d/cron restart
+	echo "AliDDNS NOT ENABLED！" > /var/log/aliddns.log
+}
