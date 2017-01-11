@@ -10,19 +10,29 @@ iface=$(uci -q get aliddns.base.interface)
 DATE=$(date +'%Y-%m-%d %H:%M:%S')
 timestamp=$(date -u "+%Y-%m-%dT%H%%3A%M%%3A%SZ")
 
-# ip=`curl -sSL http://whatismyip.akamai.com/`
+# ip=$(curl -sSL 'http://whatismyip.akamai.com')
 ip=$(ifconfig $iface 2>/dev/null | sed -n 's/.*inet addr:\([0-9.]*\) .*/\1/p')
 log_file=/var/log/aliddns.log
 
-check_aliddns() {
-	current_ip=`nslookup $sub_dm.$main_dm dns9.hichina.com 2>/dev/null | sed -n 's/Address 1: \([0-9.]*\)/\1/p' | sed -n '2p'`
-	if [ "Z$current_ip" == "Z" ]; then
-		current_ip=`nslookup $sub_dm.$main_dm dns10.hichina.com 2>/dev/null | sed -n 's/Address 1: \([0-9.]*\)/\1/p' | sed -n '2p'`
+resolve2ip() {
+	# resolve2ip domain<string>
+	domain=$1
+	tmp_ip=`nslookup $domain dns9.hichina.com 2>/dev/null | sed -n 's/Address 1: \([0-9.]*\)/\1/p' | sed -n '2p'`
+	if [ "Z$tmp_ip" == "Z" ]; then
+		tmp_ip=`nslookup $domain dns10.hichina.com 2>/dev/null | sed -n 's/Address 1: \([0-9.]*\)/\1/p' | sed -n '2p'`
 	fi
+	if [ "Z$tmp_ip" == "Z" ]; then
+		tmp_ip=`nslookup $domain 114.114.115.115 2>/dev/null | sed -n 's/Address 1: \([0-9.]*\)/\1/p' | sed -n '2p'`
+	fi
+	echo -n $tmp_ip
+}
+
+check_aliddns() {
+	echo "$DATE WAN-IP: ${ip}"
+	current_ip=$(resolve2ip "$sub_dm.$main_dm")
 	if [ "Z$current_ip" == "Z" ]; then
 		rrid='' # NO Resolve IP Means new Record_ID
 	fi
-	echo "$DATE WAN-IP: ${ip}"
 	echo "$DATE DOMAIN-IP: ${current_ip}"
 	if [ "Z$ip" == "Z$current_ip" ]; then
 		echo "$DATE IP dont need UPDATE..."
@@ -34,21 +44,19 @@ check_aliddns() {
 }
 
 urlencode() {
-	# urlencode <string>
+	# urlencode url<string>
 	out=''
-	for i in $(seq ${#1}); do
-		c="${1:$(($i - 1)):1}"
+	for c in $(echo -n $1 | sed 's/[^\n]/&\n/g'); do
 		case $c in
-		[a-zA-Z0-9._-]) out="$out$c" ;;
-		*) out="$out`printf '%%%02X' "'$c"`" ;;
+			[a-zA-Z0-9._-]) out="$out$c" ;;
+			*) out="$out$(printf '%%%02X' "'$c")" ;;
 		esac
-		i=$(($i + 1))
 	done
 	echo -n $out
 }
 
-
 send_request() {
+	# send_request action<string> args<string>
 	local args="AccessKeyId=$ak_id&Action=$1&Format=json&$2&Version=2015-01-09"
 	local hash=$(urlencode $(echo -n "GET&%2F&$(urlencode $args)" | openssl dgst -sha1 -hmac "$ak_sec&" -binary | openssl base64))
 	curl -sSL "http://alidns.aliyuncs.com/?$args&Signature=$hash"
@@ -98,6 +106,9 @@ clean_log() {
 		echo "$DATE Log Cleaned！"
 	fi
 }
+
+[ -x /usr/bin/openssl -a -x /usr/bin/curl -a -x /bin/sed ] ||
+	( echo "Need openssl + curl + sed !" && exit 1 )
 
 clean_log
 check_aliddns || do_ddns_record
