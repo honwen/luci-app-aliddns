@@ -17,9 +17,9 @@ log_file=/var/log/aliddns.log
 resolve2ip() {
 	# resolve2ip domain<string>
 	domain=$1
-	tmp_ip=`nslookup $domain dns9.hichina.com 2>/dev/null | sed -n 's/Address 1: \([0-9.]*\)/\1/p' | sed -n '2p'`
+	tmp_ip=`nslookup $domain ns1.alidns.com 2>/dev/null | sed -n 's/Address 1: \([0-9.]*\)/\1/p' | sed -n '2p'`
 	if [ "Z$tmp_ip" == "Z" ]; then
-		tmp_ip=`nslookup $domain dns10.hichina.com 2>/dev/null | sed -n 's/Address 1: \([0-9.]*\)/\1/p' | sed -n '2p'`
+		tmp_ip=`nslookup $domain ns2.alidns.com 2>/dev/null | sed -n 's/Address 1: \([0-9.]*\)/\1/p' | sed -n '2p'`
 	fi
 	if [ "Z$tmp_ip" == "Z" ]; then
 		tmp_ip=`nslookup $domain 114.114.115.115 2>/dev/null | sed -n 's/Address 1: \([0-9.]*\)/\1/p' | sed -n '2p'`
