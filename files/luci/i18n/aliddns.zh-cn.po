@@ -10,17 +10,14 @@ msgstr "启用"
 msgid "Base"
 msgstr "基本设置"
 
-msgid "Enable / Disable AliDDNS"
-msgstr "开启或关闭阿里动态域名"
-
 msgid "WAN Interface"
 msgstr "外网接口"
 
 msgid "Select WAN Interface"
 msgstr "选择外网接口"
 
-msgid "Select the Interface for AliDDNS, like wan/pppoe-wan"
-msgstr "阿里动态域名的外网接口，如wan/pppoe-wan"
+msgid "Select the Interface for AliDDNS, like eth0/pppoe-wan"
+msgstr "动态域名的外网接口，如eth0/pppoe-wan"
 
 msgid "Main Domain"
 msgstr "主域名"
@@ -28,11 +25,11 @@ msgstr "主域名"
 msgid "Sub Domain"
 msgstr "子域名"
 
-msgid "The Main Domain, like: github.com"
-msgstr "想要解析的主域名，例如: github.com"
+msgid "For example: test.github.com -> github.com"
+msgstr "例如: test.github.com 则填: github.com"
 
-msgid "The Sub Domain, example: test.github.com -> test"
-msgstr "想要解析的子域名，例如: test.github.com, 则填: test"
+msgid "For example: test.github.com -> test"
+msgstr "例如: test.github.com, 则填: test"
 
 msgid "Inspection Time"
 msgstr "检查时间"

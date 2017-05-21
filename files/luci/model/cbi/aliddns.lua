@@ -9,22 +9,22 @@ t=Map("aliddns",translate("AliDDNS"))
 e=t:section(TypedSection,"base",translate("Base"))
 e.anonymous=true
 
-enable=e:option(Flag,"enable",translate("enable"),translate("Enable / Disable AliDDNS"))
+enable=e:option(Flag,"enable",translate("enable"))
 enable.rmempty=false
 
 token=e:option(Value,"app_key",translate("Access Key ID"))
 email=e:option(Value,"app_secret",translate("Access Key Secret"))
 
-iface=e:option(ListValue,"interface",translate("WAN Interface"),translate("Select the Interface for AliDDNS, like wan/pppoe-wan"))
+iface=e:option(ListValue,"interface",translate("WAN Interface"),translate("Select the Interface for AliDDNS, like eth0/pppoe-wan"))
 iface:value("",translate("Select WAN Interface"))
 for t,e in ipairs(a.net.devices())do
-	if e~="lo"then iface:value(e)end
+	if e~="lo" and e~="br-lan"and e~="sit0"then iface:value(e)end
 end
 
 iface.rmempty=false
-main=e:option(Value,"main_domain",translate("Main Domain"),translate("The Main Domain, like: github.com"))
+main=e:option(Value,"main_domain",translate("Main Domain"),translate("For example: test.github.com -> github.com"))
 main.rmempty=false
-sub=e:option(Value,"sub_domain",translate("Sub Domain"),translate("The Sub Domain, example: test.github.com -> test"))
+sub=e:option(Value,"sub_domain",translate("Sub Domain"),translate("For example: test.github.com -> test"))
 sub.rmempty=false
 time=e:option(Value,"time",translate("Inspection Time"),translate("Unit: Minute, Range: 1-59"))
 time.rmempty=false

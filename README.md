@@ -29,7 +29,7 @@ OpenWrt LuCI for AliDDNS (based on DDNSC)
                 │   └── aliddns.zh-cn.lmo
                 └── model/
                     └── cbi/
-                        └── aliddnslua         // LuCI 基本设置
+                        └── aliddns.lua         // LuCI 基本设置
 ```
 
 依赖
@@ -60,7 +60,7 @@ popd
 # 选择要编译的包 LuCI -> 3. Applications
 make menuconfig
 # 开始编译
-make package/feeds/luci-app-aliddns/compile V=99
+make package/feeds/luci-app-aliddns/compile V=s
 ```
 
  [openwrt-sdk]: https://wiki.openwrt.org/doc/howto/obtain.firmware.sdk
