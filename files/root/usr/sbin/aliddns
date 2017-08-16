@@ -1,11 +1,18 @@
-#!/bin/sh
+#/bin/sh
 
-ak_id=$(uci -q get aliddns.base.app_key)
-ak_sec=$(uci -q get aliddns.base.app_secret)
-rrid=$(uci -q get aliddns.base.record_id)
-main_dm=$(uci -q get aliddns.base.main_domain)
-sub_dm=$(uci -q get aliddns.base.sub_domain)
-iface=$(uci -q get aliddns.base.interface)
+NAME=aliddns
+
+uci_get_by_name() {
+	local ret=$(uci get $NAME.$1.$2 2>/dev/null)
+	echo ${ret:=$3}
+}
+
+ak_id=$(uci_get_by_name   base app_key)
+ak_sec=$(uci_get_by_name  base app_secret)
+rrid=$(uci_get_by_name    base record_id)
+main_dm=$(uci_get_by_name base main_domain)
+sub_dm=$(uci_get_by_name  base sub_domain)
+iface=$(uci_get_by_name   base interface)
 
 DATE=$(date +'%Y-%m-%d %H:%M:%S')
 timestamp=$(date -u "+%Y-%m-%dT%H%%3A%M%%3A%SZ")
@@ -91,7 +98,7 @@ do_ddns_record() {
 	fi
 	if [ "Z$rrid" == "Z" ]; then
 		# failed
-		echo "$DATE # ERROR, Please Check Config/Time！"
+		echo "$DATE # ERROR, Please Check Config/Time"
 	else
 		# save rrid
 		uci set aliddns.base.record_id=$rrid
@@ -103,12 +110,12 @@ do_ddns_record() {
 clean_log() {
 	if [ $(cat $log_file 2>/dev/null | wc -l) -ge 16 ]; then
 		rm -f $log_file && touch $log_file
-		echo "$DATE Log Cleaned！"
+		echo "$DATE Log Cleaned"
 	fi
 }
 
 [ -x /usr/bin/openssl -a -x /usr/bin/curl -a -x /bin/sed ] ||
-	( echo "Need openssl + curl + sed !" && exit 1 )
+	( echo "Need [ openssl + curl + sed ]" && exit 1 )
 
 clean_log
 check_aliddns || do_ddns_record
