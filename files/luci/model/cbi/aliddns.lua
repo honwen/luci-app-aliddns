@@ -9,7 +9,7 @@ t=Map("aliddns",translate("AliDDNS"))
 e=t:section(TypedSection,"base",translate("Base"))
 e.anonymous=true
 
-enable=e:option(Flag,"enable",translate("enable"))
+enable=e:option(Flag,"enable",translate("Disable"))
 enable.rmempty=false
 
 token=e:option(Value,"app_key",translate("Access Key ID"))

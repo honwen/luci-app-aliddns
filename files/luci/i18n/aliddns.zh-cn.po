@@ -5,7 +5,7 @@ msgid "AliDDNS"
 msgstr "阿里DDNS"
 
 msgid "enable"
-msgstr "启用"
+msgstr "禁用"
 
 msgid "Base"
 msgstr "基本设置"
