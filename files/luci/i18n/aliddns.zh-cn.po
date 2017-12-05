@@ -10,14 +10,14 @@ msgstr "启用"
 msgid "Base"
 msgstr "基本设置"
 
-msgid "WAN Interface"
-msgstr "外网接口"
+msgid "WAN-IP Source"
+msgstr "WAN-IP来源"
 
-msgid "Select WAN Interface"
-msgstr "选择外网接口"
+msgid "Select WAN-IP Source"
+msgstr "选择WAN-IP来源"
 
-msgid "Select the Interface for AliDDNS, like eth0/pppoe-wan"
-msgstr "动态域名的外网接口，如eth0/pppoe-wan"
+msgid "Select the WAN-IP Source for AliDDNS, like wan/internet"
+msgstr "动态域名的IP来源，如wan/internet"
 
 msgid "Main Domain"
 msgstr "主域名"

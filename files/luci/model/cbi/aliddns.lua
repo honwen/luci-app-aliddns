@@ -15,11 +15,10 @@ enable.rmempty=false
 token=e:option(Value,"app_key",translate("Access Key ID"))
 email=e:option(Value,"app_secret",translate("Access Key Secret"))
 
-iface=e:option(ListValue,"interface",translate("WAN Interface"),translate("Select the Interface for AliDDNS, like eth0/pppoe-wan"))
-iface:value("",translate("Select WAN Interface"))
-for t,e in ipairs(a.net.devices())do
-	if e~="lo" and e~="br-lan"and e~="sit0"then iface:value(e)end
-end
+iface=e:option(ListValue,"interface",translate("WAN-IP Source"),translate("Select the WAN-IP Source for AliDDNS, like wan/internet"))
+iface:value("",translate("Select WAN-IP Source"))
+iface:value("internet")
+iface:value("wan")
 
 iface.rmempty=false
 main=e:option(Value,"main_domain",translate("Main Domain"),translate("For example: test.github.com -> github.com"))
@@ -39,7 +38,7 @@ tvlog.wrap="off"
 
 function tvlog.cfgvalue(e,e)
 	sylogtext=""
-	if a and nixio.fs.access(a)then
+	if a and nixio.fs.access(a) then
 		sylogtext=luci.sys.exec("tail -n 100 %s"%a)
 	end
 	return sylogtext
