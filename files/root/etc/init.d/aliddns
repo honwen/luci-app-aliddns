@@ -31,6 +31,7 @@ start() {
 	time=$(uci_get_by_name base time 10)
 	[ 0 -lt $time -a $time -lt 60 ] || time=10
 
+	[ -f /etc/crontabs/root ] || mkdir -p /etc/crontabs && touch /etc/crontabs/root
 	sed -i '/aliddns/d' /etc/crontabs/root
 	echo "*/$time * * * * /usr/sbin/aliddns >> /var/log/aliddns.log 2>&1" >> /etc/crontabs/root
 	/etc/init.d/cron restart
@@ -39,7 +40,7 @@ start() {
 }
 
 stop() {
-	sed -i '/aliddns/d' /etc/crontabs/root
+	sed -i '/aliddns/d' /etc/crontabs/root >/dev/null 2>&1
 	/etc/init.d/cron restart
 	echo "${NE_TIPS}" > /var/log/aliddns.log
 }

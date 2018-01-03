@@ -56,7 +56,7 @@ endef
 
 define Package/luci-app-aliddns/postrm
 #!/bin/sh
-sed -i '/aliddns/d' /etc/crontabs/root >/dev/null 2>&1
+[ -f /etc/crontabs/root] && sed -i '/aliddns/d' /etc/crontabs/root >/dev/null 2>&1
 exit 0
 endef
 
