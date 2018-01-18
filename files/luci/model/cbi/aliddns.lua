@@ -12,6 +12,9 @@ e.anonymous=true
 enable=e:option(Flag,"enable",translate("enable"))
 enable.rmempty=false
 
+enable=e:option(Flag,"clean",translate("Clean Before Update"))
+enable.rmempty=false
+
 token=e:option(Value,"app_key",translate("Access Key ID"))
 email=e:option(Value,"app_secret",translate("Access Key Secret"))
 
