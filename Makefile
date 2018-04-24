@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016 chenhw2 <chenhw2@github.com>
+# Copyright (C) 2018 chenhw2 <https://github.com/chenhw2/>
 #
 # See /LICENSE for more information.
 #
@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-aliddns
-PKG_VERSION:=0.2.1
+PKG_VERSION:=0.3.0
 PKG_RELEASE:=1
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=chenhw2 <chenhw2@github.com>
+PKG_MAINTAINER:=chenhw2 <https://github.com/chenhw2/>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
@@ -54,9 +54,9 @@ fi
 exit 0
 endef
 
-define Package/luci-app-aliddns/postrm
+define Package/luci-app-aliddns/prerm
 #!/bin/sh
-[ -f /etc/crontabs/root] && sed -i '/aliddns/d' /etc/crontabs/root >/dev/null 2>&1
+/etc/init.d/aliddns stop
 exit 0
 endef
 

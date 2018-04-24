@@ -16,20 +16,20 @@ LEDE/OpenWrt LuCI for AliDDNS
 │   │── init.d/
 │   │   └── aliddns                            // init 脚本
 │   └── uci-defaults/
-│       └── luci-aliddns                       // uci-defaults 脚本
+│       └── luci-aliddns                        // uci-defaults 脚本
 └── usr/
     ├── sbin/
-    │   └── aliddns                            // 主程序
+    │   └── aliddns                             // 主程序
     └── lib/
         └── lua/
-            └── luci/                          // LuCI 部分
+            └── luci/                            // LuCI 部分
                 ├── controller/
-                │   └── aliddns.lua            // LuCI 菜单配置
-                ├── i18n/                      // LuCI 语言文件目录
+                │   └── aliddns.lua             // LuCI 菜单配置
+                ├── i18n/                        // LuCI 语言文件目录
                 │   └── aliddns.zh-cn.lmo
                 └── model/
                     └── cbi/
-                        └── aliddns.lua         // LuCI 基本设置
+                        └── aliddns.lua          // LuCI 基本设置
 ```
 
 依赖
