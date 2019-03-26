@@ -154,7 +154,7 @@ iface=$(uci_get_by_name   base interface)
 if [ "Z$iface" == "Zinternet" -o "Z$iface" == "Z" ]; then
 	ip=$(intelnetip)
 else
-	ip=$(ubus call network.interface.$iface status | grep '"address"' | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
+	ip=$(ubus call network.interface.$iface status | grep '"address"' | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | head -1)
 fi
 
 DATE=$(date +'%Y-%m-%d %H:%M:%S')
