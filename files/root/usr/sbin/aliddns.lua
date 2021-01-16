@@ -7,6 +7,6 @@ else
 end
 for k,v in pairs(d.DomainRecords.Record) do
 	if	v.Type=="AAAA" then
-		print(v.Value)
+		print(v.RecordId)
 	end
 end
