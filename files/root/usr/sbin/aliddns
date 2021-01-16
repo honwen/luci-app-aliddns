@@ -132,13 +132,13 @@ send_request() {
 get_recordid() {
 	sed -n 's/.*RecordId[^0-9]*\([0-9]*\).*/\1/p'
 }
-get_recordid6() {
-	#sed -n 's/.*RecordId[^0-9]*\([0-9]*\).*/\1/p'
-	/usr/bin/lua /usr/sbin/aliddns.lua $1
-}
 
 query_recordid() {
-	send_request "DescribeSubDomainRecords" "SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&SubDomain=$sub_dm.$main_dm&Timestamp=$timestamp"
+	send_request "DescribeSubDomainRecords" "SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&SubDomain=$sub_dm.$main_dm&Timestamp=$timestamp&Type=A"
+}
+
+query_recordid6() {
+	send_request "DescribeSubDomainRecords" "SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&SubDomain=$sub_dm.$main_dm&Timestamp=$timestamp&Type=AAAA"
 }
 
 update_record() {
@@ -182,7 +182,7 @@ do_ddns_record() {
 
 do_ddns_record6() {
 	if [ "Z$rrid6" == "Z" ]; then
-		rrid6=`get_recordid6 $(query_recordid)`
+		rrid6=`query_recordid6 | get_recordid`
 	fi
 	if [ "Z$rrid6" == "Z" ]; then
 		rrid6=`add_record6 | get_recordid`
