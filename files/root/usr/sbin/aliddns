@@ -16,9 +16,9 @@ uci_bool_by_name() {
 }
 
 intelnetip() {
-	tmp_ip=`curl -sL --connect-timeout 3   api-ipv4.ip.sb/ip`
+	tmp_ip=`curl -sL --connect-timeout 3 members.3322.org/dyndns/getip`
 	if [ "Z$tmp_ip" == "Z" ]; then
-		tmp_ip=`curl -sL --connect-timeout 3 members.3322.org/dyndns/getip`
+		tmp_ip=`curl -sL --connect-timeout 3   api-ipv4.ip.sb/ip`
 	fi
 	if [ "Z$tmp_ip" == "Z" ]; then
 		tmp_ip=`curl -sL --connect-timeout 3 v4.myip.la`
@@ -132,7 +132,6 @@ send_request() {
 	# send_request action<string> args<string>
 	local args="AccessKeyId=$ak_id&Action=$1&Format=json&$2&Version=2015-01-09"
 	local hash=$(urlencode $(echo -n "GET&%2F&$(urlencode $args)" | openssl dgst -sha1 -hmac "$ak_sec&" -binary | openssl base64))
-	#echo "$DATE UPDATE URL IS: http://alidns.aliyuncs.com/?$args&Signature=$hash"
 	curl -sSL --connect-timeout 5 "http://alidns.aliyuncs.com/?$args&Signature=$hash"
 }
 
@@ -157,11 +156,11 @@ add_record() {
 }
 
 update_record6() {
-	send_request "UpdateDomainRecord" "RR=$sub_dm&RecordId=$1&SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp6&SignatureVersion=1.0&Timestamp=$timestamp&Type=AAAA&Value=$ip6encoded"
+	send_request "UpdateDomainRecord" "RR=$sub_dm&RecordId=$1&SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&Timestamp=$timestamp&Type=AAAA&Value=$ip6"
 }
 
 add_record6() {
-	send_request "AddDomainRecord&DomainName=$main_dm" "RR=$sub_dm&SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp6&SignatureVersion=1.0&Timestamp=$timestamp&Type=AAAA&Value=$ip6encoded"
+	send_request "AddDomainRecord&DomainName=$main_dm" "RR=$sub_dm&SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&Timestamp=$timestamp&Type=AAAA&Value=$ip6"
 }
 
 del_record() {
@@ -185,7 +184,6 @@ do_ddns_record() {
 		echo "$DATE ADD record $rrid"
 	else
 		update_record $rrid >/dev/null 2>&1
-		#update_record $rrid
 		echo "$DATE UPDATE record $rrid"
 	fi
 	if [ "Z$rrid" == "Z" ]; then
@@ -208,7 +206,6 @@ do_ddns_record6() {
 		echo "$DATE ADD record $rrid6"
 	else
 		update_record6 $rrid6 >/dev/null 2>&1
-		#update_record6 $rrid6
 		echo "$DATE UPDATE record $rrid6"
 	fi
 	if [ "Z$rrid6" == "Z" ]; then
@@ -229,28 +226,25 @@ clean_log() {
 	fi
 }
 
-[ -x /usr/bin/openssl -a -x /usr/bin/curl -a -x /bin/sed ] ||
-	( echo "Need [ openssl + curl + sed ]" && exit 1 )
+[ -x /usr/bin/openssl -a -x /usr/bin/curl -a -x /bin/sed ] || {
+ echo "Need [ openssl + curl + sed ]"
+ exit 1
+}
+
 
 ak_id=$(uci_get_by_name   base app_key)
 ak_sec=$(uci_get_by_name  base app_secret)
-rrid=$(uci_get_by_name     base record_id)
+rrid=$(uci_get_by_name    base record_id)
 rrid6=$(uci_get_by_name   base record_id6)
 main_dm=$(uci_get_by_name base main_domain)
 sub_dm=$(uci_get_by_name  base sub_domain)
 
-ipv6=$(uci_get_by_name    base ipv6)
-
 iface=$(uci_get_by_name   base interface)
 if [ "Z$iface" == "Zinternet" -o "Z$iface" == "Z" ]; then
 	ip=$(intelnetip)
-	[ $ipv6 == 1 ] && ip6=$(intelnetip6)
 else
 	ip=$(ubus call network.interface.$iface status | grep '"address"' | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | head -1)
-	[ $ipv6 == 1 ] && ip6=$(ubus call network.interface.$iface status | grep '"address"' | grep -oE '([0-9A-Fa-f]{0,4}:){2,7}([0-9A-Fa-f]{1,4}$|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})' | head -1)
 fi
-
-[ $ipv6 == 1 ] && ip6encoded=`urlencode $ip6`
 
 DATE=$(date +'%Y-%m-%d %H:%M:%S')
 timestamp=$(date -u "+%Y-%m-%dT%H%%3A%M%%3A%SZ")
@@ -258,7 +252,13 @@ timestamp=$(date -u "+%Y-%m-%dT%H%%3A%M%%3A%SZ")
 clean_log
 check_aliddns || do_ddns_record
 
-if [ $ipv6 == 1 ]; then
-	timestamp6=$(date -u "+%m-%d-%YT%H%%3A%M%%3A%SZ")
-	check_aliddns6 || do_ddns_record6
+# exit if ipv6 not-enabled
+uci_bool_by_name base ipv6 || exit 0
+
+if [ "Z$iface" == "Zinternet" -o "Z$iface" == "Z" ]; then
+	ip6=`urlencode $(intelnetip6)`
+else
+	ip6=`urlencode $(ubus call network.interface.$iface status | grep '"address"' | grep -oE '([0-9A-Fa-f]{0,4}:){2,7}([0-9A-Fa-f]{1,4}$|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})' | head -1)`
 fi
+
+check_aliddns6 || do_ddns_record6
