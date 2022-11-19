@@ -198,6 +198,14 @@ do_ddns_record() {
 }
 
 do_ddns_record6() {
+	if uci_bool_by_name base clean ; then
+		query_recordid6 | get_recordid | while read rr; do
+			echo "$DATE Clean record $sub_dm.$main_dm: $rr"
+			del_record $rr >/dev/null
+			timestamp=$(date -u "+%Y-%m-%dT%H%%3A%M%%3A%SZ")
+		done
+		rrid=''
+	fi
 	if [ "Z$rrid6" == "Z" ]; then
 		rrid6=`query_recordid6 | get_recordid`
 	fi
