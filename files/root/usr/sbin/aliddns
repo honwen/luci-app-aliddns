@@ -156,11 +156,11 @@ add_record() {
 }
 
 update_record6() {
-	send_request "UpdateDomainRecord" "RR=$sub_dm&RecordId=$1&SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&Timestamp=$timestamp&Type=AAAA&Value=$ip6"
+	send_request "UpdateDomainRecord" "RR=$sub_dm&RecordId=$1&SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&Timestamp=$timestamp&Type=AAAA&Value=`urlencode $ip6`"
 }
 
 add_record6() {
-	send_request "AddDomainRecord&DomainName=$main_dm" "RR=$sub_dm&SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&Timestamp=$timestamp&Type=AAAA&Value=$ip6"
+	send_request "AddDomainRecord&DomainName=$main_dm" "RR=$sub_dm&SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&Timestamp=$timestamp&Type=AAAA&Value=`urlencode $ip6`"
 }
 
 del_record() {
@@ -198,6 +198,14 @@ do_ddns_record() {
 }
 
 do_ddns_record6() {
+	if uci_bool_by_name base clean ; then
+		query_recordid6 | get_recordid | while read rr; do
+			echo "$DATE Clean record $sub_dm.$main_dm: $rr"
+			del_record $rr >/dev/null
+			timestamp=$(date -u "+%Y-%m-%dT%H%%3A%M%%3A%SZ")
+		done
+		rrid=''
+	fi
 	if [ "Z$rrid6" == "Z" ]; then
 		rrid6=`query_recordid6 | get_recordid`
 	fi
@@ -255,10 +263,10 @@ check_aliddns || do_ddns_record
 # exit if ipv6 not-enabled
 uci_bool_by_name base ipv6 || exit 0
 
-if [ "Z$iface" == "Zinternet" -o "Z$iface" == "Z" ]; then
-	ip6=`urlencode $(intelnetip6)`
+if [ "Z$iface6" == "Zinternet" -o "Z$iface6" == "Z" ]; then
+	ip6=$(intelnetip6)
 else
-	ip6=`urlencode $(ubus call network.interface.$iface status | grep '"address"' | grep -oE '([0-9A-Fa-f]{0,4}:){2,7}([0-9A-Fa-f]{1,4}$|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})' | head -1)`
+	ip6=$(ubus call network.interface.$iface6 status | grep '"address"' | grep -oE '([0-9A-Fa-f]{0,4}:){2,7}([0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){4})' | head -1)
 fi
 
 check_aliddns6 || do_ddns_record6
