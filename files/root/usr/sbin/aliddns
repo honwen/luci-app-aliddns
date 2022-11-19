@@ -81,7 +81,7 @@ check_aliddns() {
 		echo "$DATE ERROR, cant get WAN-IP..."
 		return 0
 	fi
-	current_ip=$(resolve2ip "$sub_dm.$main_dm")
+	current_ip=$(resolve2ip "$dm_real")
 	if [ "Z$current_ip" == "Z" ]; then
 		rrid='' # NO Resolve IP Means new Record_ID
 	fi
@@ -101,7 +101,7 @@ check_aliddns6() {
 		echo "$DATE ERROR, cant get WAN6-IP..."
 		return 0
 	fi
-	current_ip6=$(resolve2ip6 "$sub_dm.$main_dm")
+	current_ip6=$(resolve2ip6 "$dm_real")
 	if [ "Z$current_ip6" == "Z" ]; then
 		rrid6='' # NO Resolve IP Means new Record_ID
 	fi
@@ -132,7 +132,7 @@ send_request() {
 	# send_request action<string> args<string>
 	local args="AccessKeyId=$ak_id&Action=$1&Format=json&$2&Version=2015-01-09"
 	local hash=$(urlencode $(echo -n "GET&%2F&$(urlencode $args)" | openssl dgst -sha1 -hmac "$ak_sec&" -binary | openssl base64))
-	curl -sSL --connect-timeout 5 "http://alidns.aliyuncs.com/?$args&Signature=$hash"
+	curl -sSL --connect-timeout 10 "http://alidns.aliyuncs.com/?$args&Signature=$hash"
 }
 
 get_recordid() {
@@ -140,27 +140,27 @@ get_recordid() {
 }
 
 query_recordid() {
-	send_request "DescribeSubDomainRecords" "SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&SubDomain=$sub_dm.$main_dm&Timestamp=$timestamp&Type=A"
+	send_request "DescribeSubDomainRecords" "SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&SubDomain=$dm_escape&Timestamp=$timestamp&Type=A"
 }
 
 query_recordid6() {
-	send_request "DescribeSubDomainRecords" "SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&SubDomain=$sub_dm.$main_dm&Timestamp=$timestamp&Type=AAAA"
+	send_request "DescribeSubDomainRecords" "SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&SubDomain=$dm_escape&Timestamp=$timestamp&Type=AAAA"
 }
 
 update_record() {
-	send_request "UpdateDomainRecord" "RR=$sub_dm&RecordId=$1&SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&Timestamp=$timestamp&Type=A&Value=$ip"
+	send_request "UpdateDomainRecord" "RR=$sub_dm_escape&RecordId=$1&SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&Timestamp=$timestamp&Type=A&Value=$ip"
 }
 
 add_record() {
-	send_request "AddDomainRecord&DomainName=$main_dm" "RR=$sub_dm&SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&Timestamp=$timestamp&Type=A&Value=$ip"
+	send_request "AddDomainRecord&DomainName=$main_dm" "RR=$sub_dm_escape&SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&Timestamp=$timestamp&Type=A&Value=$ip"
 }
 
 update_record6() {
-	send_request "UpdateDomainRecord" "RR=$sub_dm&RecordId=$1&SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&Timestamp=$timestamp&Type=AAAA&Value=`urlencode $ip6`"
+	send_request "UpdateDomainRecord" "RR=$sub_dm_escape&RecordId=$1&SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&Timestamp=$timestamp&Type=AAAA&Value=$ip6_escape"
 }
 
 add_record6() {
-	send_request "AddDomainRecord&DomainName=$main_dm" "RR=$sub_dm&SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&Timestamp=$timestamp&Type=AAAA&Value=`urlencode $ip6`"
+	send_request "AddDomainRecord&DomainName=$main_dm" "RR=$sub_dm_escape&SignatureMethod=HMAC-SHA1&SignatureNonce=$timestamp&SignatureVersion=1.0&Timestamp=$timestamp&Type=AAAA&Value=$ip6_escape"
 }
 
 del_record() {
@@ -170,7 +170,7 @@ del_record() {
 do_ddns_record() {
 	if uci_bool_by_name base clean ; then
 		query_recordid | get_recordid | while read rr; do
-			echo "$DATE Clean record $sub_dm.$main_dm: $rr"
+			echo "$DATE Clean record $dm_show: $rr"
 			del_record $rr >/dev/null
 			timestamp=$(date -u "+%Y-%m-%dT%H%%3A%M%%3A%SZ")
 		done
@@ -200,7 +200,7 @@ do_ddns_record() {
 do_ddns_record6() {
 	if uci_bool_by_name base clean ; then
 		query_recordid6 | get_recordid | while read rr; do
-			echo "$DATE Clean record $sub_dm.$main_dm: $rr"
+			echo "$DATE Clean record $dm_show: $rr"
 			del_record $rr >/dev/null
 			timestamp=$(date -u "+%Y-%m-%dT%H%%3A%M%%3A%SZ")
 		done
@@ -247,6 +247,15 @@ rrid6=$(uci_get_by_name   base record_id6)
 main_dm=$(uci_get_by_name base main_domain)
 sub_dm=$(uci_get_by_name  base sub_domain)
 
+if [ "Z$sub_dm" == "Z@" -o "Z$sub_dm" == "Z" ]; then
+	dm_real="$main_dm"
+else
+	dm_real="$sub_dm.$main_dm"
+fi
+dm_show="$sub_dm.$main_dm"
+dm_escape=`urlencode "$sub_dm.$main_dm"`
+sub_dm_escape=`urlencode "$sub_dm"`
+
 iface=$(uci_get_by_name   base interface)
 if [ "Z$iface" == "Zinternet" -o "Z$iface" == "Z" ]; then
 	ip=$(intelnetip)
@@ -268,5 +277,6 @@ if [ "Z$iface6" == "Zinternet" -o "Z$iface6" == "Z" ]; then
 else
 	ip6=$(ubus call network.interface.$iface6 status | grep '"address"' | grep -oE '([0-9A-Fa-f]{0,4}:){2,7}([0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){4})' | head -1)
 fi
+ip6_escape=`urlencode "$ip6"`
 
 check_aliddns6 || do_ddns_record6
