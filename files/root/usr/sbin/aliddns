@@ -62,7 +62,7 @@ resolve2ip() {
 resolve2ip6() {
 	# resolve2ip6 domain<string>
 	domain=$1
-	tmp_ip=`nslookup $domain ns1.alidns.com 2>/dev/null | sed '/^Server/d; /#53$/d' | grep -oE '([0-9A-Fa-f]{0,4}:){2,7}([0-9A-Fa-f]{1,4}$|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})' | tail -n1`
+	tmp_ip6=`nslookup $domain ns1.alidns.com 2>/dev/null | sed '/^Server/d; /#53$/d' | grep -oE '([0-9A-Fa-f]{0,4}:){2,7}([0-9A-Fa-f]{1,4}$|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})' | tail -n1`
 	if [ "Z$tmp_ip6" == "Z" ]; then
 		tmp_ip6=`nslookup $domain ns2.alidns.com  2>/dev/null | sed '/^Server/d; /#53$/d' | grep -oE '([0-9A-Fa-f]{0,4}:){2,7}([0-9A-Fa-f]{1,4}$|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})' | tail -n1`
 	fi
