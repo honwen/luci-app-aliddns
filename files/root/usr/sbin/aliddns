@@ -30,23 +30,23 @@ intelnetip() {
 }
 
 intelnetip6() {
-	tmp_ip=`curl -sL --connect-timeout 3   ipv6.whatismyip.akamai.com`
-	if [ "Z$tmp_ip" == "Z" ]; then
-		tmp_ip=`curl -sL --connect-timeout 3 speed.neu6.edu.cn/getIP.php`
+	tmp_ip6=`curl -sL --connect-timeout 3   ipv6.whatismyip.akamai.com`
+	if [ "Z$tmp_ip6" == "Z" ]; then
+		tmp_ip6=`curl -sL --connect-timeout 3 speed.neu6.edu.cn/getIP.php`
 	fi
-	if [ "Z$tmp_ip" == "Z" ]; then
-		tmp_ip=`curl -sL --connect-timeout 3 v6.ident.me`
+	if [ "Z$tmp_ip6" == "Z" ]; then
+		tmp_ip6=`curl -sL --connect-timeout 3 v6.ident.me`
 	fi
-	if [ "Z$tmp_ip" == "Z" ]; then
-		tmp_ip=`curl -sL --connect-timeout 3 api-ipv6.ip.sb/ip`
+	if [ "Z$tmp_ip6" == "Z" ]; then
+		tmp_ip6=`curl -sL --connect-timeout 3 api-ipv6.ip.sb/ip`
 	fi
-	echo -n $tmp_ip
+	echo -n $tmp_ip6
 }
 
 resolve2ip() {
 	# resolve2ip domain<string>
 	domain=$1
-	tmp_ip=`nslookup    $domain ns1.alidns.com 2>/dev/null | sed '/^Server/d; /#53$/d' | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | tail -n1`
+	tmp_ip=`nslookup $domain ns1.alidns.com 2>/dev/null | sed '/^Server/d; /#53$/d' | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | tail -n1`
 	if [ "Z$tmp_ip" == "Z" ]; then
 		tmp_ip=`nslookup $domain ns2.alidns.com  2>/dev/null | sed '/^Server/d; /#53$/d' | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | tail -n1`
 	fi
@@ -62,17 +62,17 @@ resolve2ip() {
 resolve2ip6() {
 	# resolve2ip6 domain<string>
 	domain=$1
-	tmp_ip=`nslookup    $domain ns1.alidns.com 2>/dev/null | sed '/^Server/d; /#53$/d' | grep -oE '([0-9A-Fa-f]{0,4}:){2,7}([0-9A-Fa-f]{1,4}$|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})' | tail -n1`
-	if [ "Z$tmp_ip" == "Z" ]; then
-		tmp_ip=`nslookup $domain ns2.alidns.com  2>/dev/null | sed '/^Server/d; /#53$/d' | grep -oE '([0-9A-Fa-f]{0,4}:){2,7}([0-9A-Fa-f]{1,4}$|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})' | tail -n1`
+	tmp_ip6=`nslookup $domain ns1.alidns.com 2>/dev/null | sed '/^Server/d; /#53$/d' | grep -oE '([0-9A-Fa-f]{0,4}:){2,7}([0-9A-Fa-f]{1,4}$|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})' | tail -n1`
+	if [ "Z$tmp_ip6" == "Z" ]; then
+		tmp_ip6=`nslookup $domain ns2.alidns.com  2>/dev/null | sed '/^Server/d; /#53$/d' | grep -oE '([0-9A-Fa-f]{0,4}:){2,7}([0-9A-Fa-f]{1,4}$|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})' | tail -n1`
 	fi
-	if [ "Z$tmp_ip" == "Z" ]; then
-		tmp_ip=`nslookup $domain 114.114.115.115 2>/dev/null | sed '/^Server/d; /#53$/d' | grep -oE '([0-9A-Fa-f]{0,4}:){2,7}([0-9A-Fa-f]{1,4}$|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})' | tail -n1`
+	if [ "Z$tmp_ip6" == "Z" ]; then
+		tmp_ip6=`nslookup $domain 114.114.115.115 2>/dev/null | sed '/^Server/d; /#53$/d' | grep -oE '([0-9A-Fa-f]{0,4}:){2,7}([0-9A-Fa-f]{1,4}$|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4})' | tail -n1`
 	fi
-	if [ "Z$tmp_ip" == "Z" ]; then
-		tmp_ip=`curl -sL --connect-timeout 3 "119.29.29.29/d?dn=$domain&type=AAAA"`
+	if [ "Z$tmp_ip6" == "Z" ]; then
+		tmp_ip6=`curl -sL --connect-timeout 3 "119.29.29.29/d?dn=$domain&type=AAAA"`
 	fi
-	echo -n $tmp_ip
+	echo -n $tmp_ip6
 }
 
 check_aliddns() {
@@ -204,7 +204,7 @@ do_ddns_record6() {
 			del_record $rr >/dev/null
 			timestamp=$(date -u "+%Y-%m-%dT%H%%3A%M%%3A%SZ")
 		done
-		rrid=''
+		rrid6=''
 	fi
 	if [ "Z$rrid6" == "Z" ]; then
 		rrid6=`query_recordid6 | get_recordid`
@@ -239,7 +239,6 @@ clean_log() {
  exit 1
 }
 
-
 ak_id=$(uci_get_by_name   base app_key)
 ak_sec=$(uci_get_by_name  base app_secret)
 rrid=$(uci_get_by_name    base record_id)
@@ -256,7 +255,7 @@ dm_show="$sub_dm.$main_dm"
 dm_escape=`urlencode "$sub_dm.$main_dm"`
 sub_dm_escape=`urlencode "$sub_dm"`
 
-iface=$(uci_get_by_name   base interface)
+iface=$(uci_get_by_name base interface)
 if [ "Z$iface" == "Zinternet" -o "Z$iface" == "Z" ]; then
 	ip=$(intelnetip)
 else
@@ -272,6 +271,7 @@ check_aliddns || do_ddns_record
 # exit if ipv6 not-enabled
 uci_bool_by_name base ipv6 || exit 0
 
+iface6=$(uci_get_by_name base interface6)
 if [ "Z$iface6" == "Zinternet" -o "Z$iface6" == "Z" ]; then
 	ip6=$(intelnetip6)
 else
@@ -279,4 +279,5 @@ else
 fi
 ip6_escape=`urlencode "$ip6"`
 
+clean_log
 check_aliddns6 || do_ddns_record6
