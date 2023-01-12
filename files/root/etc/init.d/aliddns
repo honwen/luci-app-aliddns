@@ -2,6 +2,8 @@
 
 START=80
 NAME=aliddns
+EXTRA_COMMANDS="status"
+EXTRA_HELP="        status          Service status"
 
 NE_TIPS='AliDDNS NOT ENABLED'
 
@@ -51,7 +53,7 @@ start() {
 	[ -f /etc/crontabs/root ] || mkdir -p /etc/crontabs && touch /etc/crontabs/root
 	sed -i '/aliddns/d' /etc/crontabs/root
 	echo "*/$time * * * * /usr/sbin/aliddns >> /var/log/aliddns.log 2>&1" >> /etc/crontabs/root
-	/etc/init.d/cron restart
+	/etc/init.d/cron reload
 
 	( /usr/sbin/aliddns >> /var/log/aliddns.log 2>&1 ) &
 }
@@ -59,6 +61,10 @@ start() {
 stop() {
 	rm -rf "/etc/hotplug.d/iface/${START}-${NAME}"
 	sed -i '/aliddns/d' /etc/crontabs/root >/dev/null 2>&1
-	/etc/init.d/cron restart
+	/etc/init.d/cron reload
 	echo "${NE_TIPS}" > /var/log/aliddns.log
+}
+
+status() {
+	grep -q aliddns /etc/crontabs/root && echo "running" || echo "inactive" && false
 }
